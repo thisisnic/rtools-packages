@@ -1,0 +1,41 @@
+# Maintainer: Biswapriyo Nath <nathbappai@gmail.com>
+
+_realname=raylib
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+pkgver=4.0.0
+pkgrel=1
+pkgdesc='Simple and easy-to-use game programming library (mingw-w64)'
+arch=('any')
+url='https://www.raylib.com'
+license=('spdx:Zlib')
+makedepends=("${MINGW_PACKAGE_PREFIX}-cmake"
+             "${MINGW_PACKAGE_PREFIX}-ninja"
+             "${MINGW_PACKAGE_PREFIX}-gcc")
+source=("${_realname}-${pkgver}.tar.gz::https://github.com/raysan5/raylib/archive/refs/tags/${pkgver}.tar.gz")
+sha256sums=('11f6087dc7bedf9efb3f69c0c872f637e421d914e5ecea99bbe7781f173dc38c')
+
+build() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+  mkdir -p "${srcdir}/build-${MSYSTEM}" && cd "${srcdir}/build-${MSYSTEM}"
+
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+  ${MINGW_PREFIX}/bin/cmake.exe \
+    -G"Ninja" \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    ../${_realname}-${pkgver}
+
+  "${MINGW_PREFIX}"/bin/cmake.exe --build .
+}
+
+package() {
+  cd "${srcdir}/build-${MSYSTEM}"
+
+  DESTDIR="${pkgdir}" "${MINGW_PREFIX}"/bin/cmake.exe --install .
+  cp raylib/external/glfw/src/libglfw3.a ${pkgdir}${MINGW_PREFIX}/lib/
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}
